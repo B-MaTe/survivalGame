@@ -15,8 +15,7 @@ class Player:
         self.image = self.createPlayer(self.getImagePath(self.skin))
         self.rect = self.image.get_rect()
         self.x, self.y = self.settings.W // 2 - self.image.get_width() // 2, self.settings.H // 2  - self.image.get_height() // 2
-        self.rect = (self.x, self.y)
-        
+        self.rect.x, self.rect.y = self.x, self.y
     
     def getImagePath(self, skin) -> str:
         ### CWD

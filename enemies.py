@@ -12,7 +12,6 @@ class Enemy(Sprite):
         self.difficulty = self.settings.difficulty
         self.image = self.createEnemy(self.getImagePath())
         self.rect = self.image.get_rect()
-        self.rect.x, self.rect.y = 0,0
         self.x, self.y = self.rect.x, self.rect.y
         
         

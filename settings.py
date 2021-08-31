@@ -17,10 +17,13 @@ class Settings:
         
         ### Background
         self.bgColor = (176, 156, 156)
+        self.BgCircleColor = (255, 244, 233)
+        self.circleSize = 15
+        self.noise = 125
         
         ### Rate of enemy spawning
         ### 10 = 1 in every 10 run of program main loop(REAAAALLLYYY FAST)
-        self.spawnRate = 1000
+        self.spawnRate = 600
         
         ### Number of enemies / level (Loading time is heavily impacted)
         self.waitingEnemyNumber = {
@@ -39,6 +42,7 @@ class Settings:
         
         ### PLAYER SETTINGS ###
         self.playerSize = (self.H // 25 , self.H // 25)
+        self.playerSpeed = 2
         
         self.playerHealth = {
             "beginner": 200,
@@ -49,6 +53,7 @@ class Settings:
             "hardcore" : 1
         }
         
+        ### ENEMY SETTINGS ###
         
         self.enemySize = {
             "beginner": 30,
@@ -68,3 +73,4 @@ class Settings:
             "veryHard" : 2,
             "hardcore" : 2.3
         }
+        
