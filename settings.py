@@ -16,8 +16,8 @@ class Settings:
         self.W, self.H = self.screen.get_width(), self.screen.get_height()
         
         ### Background
-        self.bgColor = (176, 156, 156)
-        self.BgCircleColor = (255, 244, 233)
+        self.bgColor = (15, 0, 61)
+        self.BgCircleColor = (209, 254, 0)
         self.circleSize = 15
         self.noise = 125
         
