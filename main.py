@@ -43,8 +43,8 @@ class Main:
         
         ### Values for calculating stuff
         self.middleCoo = (self.settings.W // 2, self.settings.H // 2)
-        self.healthBarStartPos = self.middleCoo[0] - self.player.image.get_width() // 2, self.middleCoo[1] + self.player.image.get_height() * 0.5
-        self.healthBarEndPos = self.middleCoo[0] + self.player.image.get_width() // 2, self.middleCoo[1] + self.player.image.get_height() * 0.5
+        self.healthBarStartPos = self.middleCoo[0] - self.player.image.get_width() // 2, self.middleCoo[1] + self.player.image.get_height() * 0.5 + 4
+        self.healthBarEndPos = self.middleCoo[0] + self.player.image.get_width() // 2, self.middleCoo[1] + self.player.image.get_height() * 0.5 + 4
         self.playerHealth = self.healthBarEndPos[0] - self.healthBarStartPos[0] ### Calculating the health in px
         self.damage = 0
         self.reloadTime = None
@@ -186,6 +186,14 @@ class Main:
     def blitPlayerHealthBar(self) -> p.Rect:
         p.draw.line(self.screen, (255, 0, 0), self.healthBarStartPos, (self.healthBarEndPos[0] - self.damage, self.healthBarEndPos[1]), 2)
         
+    
+    def blitEnemyHealthBar(self) -> p.Rect:
+        if self.enemies:
+            for enemy in self.enemies:
+                enemyW, enemyH = enemy.image.get_width(), enemy.image.get_height()
+                pos = enemy.rect.x, enemy.rect.y + enemyH + 4
+                p.draw.line(self.screen, (255, 0, 0), pos, (pos[0] + (enemy.health / enemy.startingHealth * enemyW), pos[1]), 2)
+        
         
     def blitBackground(self) -> None:
         ### If bg is already created, this function draws them
@@ -309,9 +317,12 @@ class Main:
         self.blitBackground()
         self.changeBackgroundCirclesOutOfPos()
         
-        ### Blit the player and the health bar
+        ### Blit the player
         self.blitPlayer()
+        
+        ### Blit the health bars
         self.blitPlayerHealthBar()
+        self.blitEnemyHealthBar()
         
         ### Creates enemy at given rate
         self.randomCreateEnemy()

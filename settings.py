@@ -22,14 +22,14 @@ class Settings:
         self.noise = 125
         
         ### Rate of enemy spawning
-        ### 10 = 1 in every 10 run of program main loop(REAAAALLLYYY FAST)
+        ### 10: 1 in every run of program main loop(REAAAALLLYYY FAST)
         self.spawnRate = 600
         
         ### Number of enemies / level (Loading time is heavily impacted)
         self.waitingEnemyNumber = {
             "beginner": 50,
             "easy" : 100,
-            "normal" : 10, 
+            "normal" : 150, 
             "hard" : 200,
             "veryHard" : 300,
             "hardcore" : 500
@@ -43,8 +43,8 @@ class Settings:
         ### PLAYER SETTINGS ###
         self.playerSize = (self.H // 25 , self.H // 25)
         self.playerSpeed = 2
-        self.playerShootingCapacity = 5
-        self.numberOfBullets = 60 ### Capacity of magazine
+        self.playerShootingCapacity = 25
+        self.numberOfBullets = 60 ### Has to be bigger than the capacity of magazine
         self.bulletColor = (0,0,0)
         self.reloadTime = 5000 ### Milliseconds
         

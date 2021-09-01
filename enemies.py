@@ -13,7 +13,9 @@ class Enemy(Sprite):
         self.image = self.createEnemy(self.getImagePath())
         self.rect = self.image.get_rect()
         self.x, self.y = self.rect.x, self.rect.y
-        self.health = self.image.get_width() // 5
+        self.startingHealth = self.image.get_width() // 5
+        self.health = self.startingHealth
+        
         
         
         
