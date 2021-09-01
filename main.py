@@ -4,6 +4,7 @@ from player import Player
 from enemies import Enemy
 from random import randint, randrange
 from pygame.time import Clock
+from bullets import Bullet
 
 class Main:
     def __init__(self) -> None:
@@ -13,8 +14,10 @@ class Main:
         self.player = Player("basic")
         self.enemies = p.sprite.Group()
         self.waitingEnemies = p.sprite.Group()
+        self.waitingBullets = p.sprite.Group()
+        self.bullets = p.sprite.Group()
         self.active = True
-        self.createAllEnemies(self.settings.waitingEnemyNumber[self.settings.difficulty])
+        
         
         ### Background
         self.backgroundCirclePositions = []
@@ -32,7 +35,8 @@ class Main:
         self.right = False
         self.left = False
         
-        
+        ### Number of bullets shot at current magazine
+        self.bulletsShot = 0
         
         ### Pygame clock
         self.clock = Clock()
@@ -43,7 +47,16 @@ class Main:
         self.healthBarEndPos = self.middleCoo[0] + self.player.image.get_width() // 2, self.middleCoo[1] + self.player.image.get_height() * 0.5
         self.playerHealth = self.healthBarEndPos[0] - self.healthBarStartPos[0] ### Calculating the health in px
         self.damage = 0
+        self.reloadTime = None
+        self.randomRGB = (randint(0, 255), randint(0, 255), randint(0, 255))
         
+        ### Generate Enemies and bullets
+        self.createAllEnemies(self.settings.waitingEnemyNumber[self.settings.difficulty])
+        self.createAllBullets(self.settings.numberOfBullets)
+        
+        
+    def setRandomRGB(self):
+        self.randomRGB = (randint(0, 255), randint(0, 255), randint(0, 255))
         
     
     def checkAnyCollision(self, character) -> bool:
@@ -66,12 +79,22 @@ class Main:
                         p.quit()
      
      
+    def checkGameEnd(self) -> bool:
+        if self.playerHealth <= self.damage:
+            return True
+        return False
+    
+    
     def moveObjects(self, x, y) -> None:
         ### Move everything except the player
         if self.enemies:
             for enemy in self.enemies:
                 enemy.rect.x += x
                 enemy.rect.y += y
+        if self.bullets:
+            for bullet in self.bullets:
+                bullet.rect.x += x
+                bullet.rect.y += y
                 
         if self.backgroundCirclePositions:
             for index, pos in enumerate(self.backgroundCirclePositions):
@@ -82,6 +105,14 @@ class Main:
         for enemy in range(numberOfEnemies):
             enemy = Enemy()
             enemy.add(self.waitingEnemies)
+        
+        
+    def createAllBullets(self, numberofBullets) -> None:
+        for bullet in range(numberofBullets):
+            bullet = Bullet(2, 1, self.screen, self.middleCoo)
+            bullet.color = self.randomRGB
+            self.setRandomRGB()
+            bullet.add(self.waitingBullets)
         
         
     def createEnemy(self) -> None:
@@ -119,6 +150,12 @@ class Main:
             self.moveObjects(speed, 0)
     
     
+    def hanldeShootingEnemies(self, enemy, damage):
+        enemy.setHealth(damage)
+        if enemy.getHealth() <= 0:
+            enemy.kill()
+    
+    
     def handleEnemyMovement(self) -> None:
         ### Calculate the movement of the two axis
         if self.enemies:
@@ -140,13 +177,7 @@ class Main:
                 else:
                     enemy.rect.x += speed * xNegative
                     enemy.rect.y += speed * yNegative
-                
     
-    
-    def updateEnemies(self) -> None:
-        self.enemies.draw(self.screen)
-        self.enemies.update()
-        
     
     def blitPlayer(self) -> None:
         self.screen.blit(self.player.image, (self.player.x, self.player.y))
@@ -166,8 +197,8 @@ class Main:
     def createBackgroundCircles(self, noise) -> bool:
         ### Creates colorful circles as bg
         if not self.backgroundCirclePositions:
-            for y in range(self.settings.H // noise):
-                for x in range(self.settings.W // noise):
+            for _ in range(self.settings.H // noise):
+                for _ in range(self.settings.W // noise):
                     self.backgroundCirclePositions.append((randrange(0, self.settings.W), randrange(0, self.settings.H)))
             return False
         return True
@@ -198,10 +229,46 @@ class Main:
             self.rightBg = 0
             
             
-    def checkGameEnd(self) -> bool:
-        if self.playerHealth <= self.damage:
-            return True
-        return False
+    def createBullet(self, capacity) -> p.sprite.Sprite:
+        ### Reload if no capacity
+        if self.bulletsShot >= capacity:
+            if not self.reloadTime:
+                self.reloadTime = p.time.get_ticks()
+                return
+            elif self.reloadTime + self.settings.reloadTime <= p.time.get_ticks():
+                self.bulletsShot = 0
+                self.reloadTime = None
+            else:
+                return
+    
+        ### Shoot
+        for bullet in self.waitingBullets:
+            self.bulletsShot += 1
+            bullet.add(self.bullets)
+            self.waitingBullets.remove(bullet)
+            break
+        
+        
+    def updateEnemies(self) -> None:
+        self.enemies.draw(self.screen)
+        self.enemies.update()
+        
+        
+    def updateBullets(self) -> None:
+        if self.bullets:
+            for bullet in self.bullets:
+                collision = bullet.checkCollision(self.enemies)
+                if not collision:
+                    bullet.update(self.shotX, self.shotY)
+                    bullet.draw()
+                else:
+                    self.bullets.remove(bullet)
+                    bullet.color = self.randomRGB
+                    self.setRandomRGB()
+                    self.waitingBullets.add(bullet)
+                    if type(collision) != str:
+                        self.hanldeShootingEnemies(collision, bullet.damage)
+
             
             
     def events(self) -> None:
@@ -229,6 +296,10 @@ class Main:
                     self.left = False
                 elif event.key == p.K_d:
                     self.right = False
+            
+            elif event.type == p.MOUSEBUTTONDOWN:
+                self.shotX, self.shotY = event.pos
+                self.createBullet(self.settings.playerShootingCapacity)
         
         
     def run(self) -> None:
@@ -254,6 +325,9 @@ class Main:
         
         ### Update and draw sprite group
         self.updateEnemies() 
+        
+        ### Update bullets
+        self.updateBullets()
         
         ### create an enemy randomly
         self.clock.tick(self.settings.FPS)

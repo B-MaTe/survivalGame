@@ -13,6 +13,7 @@ class Enemy(Sprite):
         self.image = self.createEnemy(self.getImagePath())
         self.rect = self.image.get_rect()
         self.x, self.y = self.rect.x, self.rect.y
+        self.health = self.image.get_width() // 5
         
         
         
@@ -36,6 +37,20 @@ class Enemy(Sprite):
         image = p.transform.scale(image, (size, size))
         return image
         
+        
+    ### SETTERS
+    
+    def setHealth(self, health, damage=True):
+        if damage:
+            self.health -= health
+        else:
+            self.health += health
+            
+            
+    ### GETTERS
+    
+    def getHealth(self):
+        return self.health
     
     
     

@@ -29,7 +29,7 @@ class Settings:
         self.waitingEnemyNumber = {
             "beginner": 50,
             "easy" : 100,
-            "normal" : 150,
+            "normal" : 10, 
             "hard" : 200,
             "veryHard" : 300,
             "hardcore" : 500
@@ -43,6 +43,10 @@ class Settings:
         ### PLAYER SETTINGS ###
         self.playerSize = (self.H // 25 , self.H // 25)
         self.playerSpeed = 2
+        self.playerShootingCapacity = 5
+        self.numberOfBullets = 60 ### Capacity of magazine
+        self.bulletColor = (0,0,0)
+        self.reloadTime = 5000 ### Milliseconds
         
         self.playerHealth = {
             "beginner": 200,
@@ -73,4 +77,5 @@ class Settings:
             "veryHard" : 2,
             "hardcore" : 2.3
         }
+    
         
