@@ -17,7 +17,7 @@ class Main:
         self.waitingBullets = p.sprite.Group()
         self.bullets = p.sprite.Group()
         self.active = True
-        
+        self.difficulty = self.settings.difficulty
         
         ### Background
         self.backgroundCirclePositions = []
@@ -36,7 +36,8 @@ class Main:
         self.left = False
         
         ### Number of bullets shot at current magazine
-        self.bulletsShot = 0
+        self.leftBulletsShot = 0
+        self.rightBulletsShot = 0
         
         ### Pygame clock
         self.clock = Clock()
@@ -48,15 +49,18 @@ class Main:
         self.playerHealth = self.healthBarEndPos[0] - self.healthBarStartPos[0] ### Calculating the health in px
         self.damage = 0
         self.reloadTime = None
-        self.randomRGB = (randint(0, 255), randint(0, 255), randint(0, 255))
+        self.lastGivenBullet = None
         
         ### Generate Enemies and bullets
-        self.createAllEnemies(self.settings.waitingEnemyNumber[self.settings.difficulty])
+        self.createAllEnemies(self.settings.waitingEnemyNumber)
         self.createAllBullets(self.settings.numberOfBullets)
         
+        ### Music
+        """self.backgroundSound = self.settings.backgroundSound
+        self.backgroundSound.play()"""
         
-    def setRandomRGB(self):
-        self.randomRGB = (randint(0, 255), randint(0, 255), randint(0, 255))
+    def randomRGB(self) -> tuple:
+        return (randint(0, 255), randint(0, 255), randint(0, 255))
         
     
     def checkAnyCollision(self, character) -> bool:
@@ -73,14 +77,17 @@ class Main:
         if self.enemies:
             for enemy in self.enemies:
                 if self.player.rect.colliderect(enemy.rect):
-                    enemy.kill()
-                    self.damage += self.settings.playerHealth[self.settings.difficulty] / self.playerHealth
+                    self.enemies.remove(enemy)
+                    enemy.reset()
+                    self.waitingEnemies.add(enemy)
+                    self.damage += enemy.damage
+                    self.player.reduceHealth(enemy.damage)
                     if self.checkGameEnd():
                         p.quit()
      
      
     def checkGameEnd(self) -> bool:
-        if self.playerHealth <= self.damage:
+        if self.player.health <= 0:
             return True
         return False
     
@@ -109,9 +116,7 @@ class Main:
         
     def createAllBullets(self, numberofBullets) -> None:
         for bullet in range(numberofBullets):
-            bullet = Bullet(2, 1, self.screen, self.middleCoo)
-            bullet.color = self.randomRGB
-            self.setRandomRGB()
+            bullet = Bullet(5, 2, self.screen, self.middleCoo)
             bullet.add(self.waitingBullets)
         
         
@@ -150,16 +155,28 @@ class Main:
             self.moveObjects(speed, 0)
     
     
-    def hanldeShootingEnemies(self, enemy, damage):
-        enemy.setHealth(damage)
-        if enemy.getHealth() <= 0:
-            enemy.kill()
-    
+    def hanldeShootingEnemies(self, enemy, damage, bullet) -> None:
+        if not bullet.getClick():
+            x, y = enemy.rect.x, enemy.rect.y
+            for damagedEnemy in self.enemies:
+                if abs(damagedEnemy.rect.x - x) < 250 and abs(damagedEnemy.rect.y - y) < 250:
+                    damagedEnemy.reduceHealth(damage)
+                    if damagedEnemy.getHealth() <= 0:
+                        self.enemies.remove(damagedEnemy)
+                        damagedEnemy.reset()
+                        self.waitingEnemies.add(damagedEnemy)
+        else:
+            enemy.reduceHealth(damage)
+            if enemy.getHealth() <= 0:
+                self.enemies.remove(enemy)
+                enemy.reset()
+                self.waitingEnemies.add(enemy)
+        
     
     def handleEnemyMovement(self) -> None:
         ### Calculate the movement of the two axis
         if self.enemies:
-            speed = self.settings.enemySpeed[self.settings.difficulty]
+            speed = self.settings.enemySpeed[self.difficulty]
             for enemy in self.enemies:
                 x, y = self.middleCoo[0] - enemy.rect.x, self.middleCoo[1] - enemy.rect.y
                 xNegative, yNegative = 1, 1
@@ -184,7 +201,8 @@ class Main:
         
         
     def blitPlayerHealthBar(self) -> p.Rect:
-        p.draw.line(self.screen, (255, 0, 0), self.healthBarStartPos, (self.healthBarEndPos[0] - self.damage, self.healthBarEndPos[1]), 2)
+        damage = self.player.getHealth() / self.settings.playerHealth[self.difficulty]
+        p.draw.line(self.screen, (255, 0, 0), self.healthBarStartPos, (self.healthBarStartPos[0] + damage * self.playerHealth, self.healthBarStartPos[1]), 3)
         
     
     def blitEnemyHealthBar(self) -> p.Rect:
@@ -192,7 +210,7 @@ class Main:
             for enemy in self.enemies:
                 enemyW, enemyH = enemy.image.get_width(), enemy.image.get_height()
                 pos = enemy.rect.x, enemy.rect.y + enemyH + 4
-                p.draw.line(self.screen, (255, 0, 0), pos, (pos[0] + (enemy.health / enemy.startingHealth * enemyW), pos[1]), 2)
+                p.draw.line(self.screen, (255, 0, 0), pos, (pos[0] + (enemy.health / enemy.startingHealth * enemyW), pos[1]), 3)
         
         
     def blitBackground(self) -> None:
@@ -237,24 +255,41 @@ class Main:
             self.rightBg = 0
             
             
-    def createBullet(self, capacity) -> p.sprite.Sprite:
+    def createLeftClickBullet(self, capacity):
         ### Reload if no capacity
-        if self.bulletsShot >= capacity:
+        if self.leftBulletsShot >= capacity:
             if not self.reloadTime:
                 self.reloadTime = p.time.get_ticks()
                 return
             elif self.reloadTime + self.settings.reloadTime <= p.time.get_ticks():
-                self.bulletsShot = 0
+                self.leftBulletsShot = 0
                 self.reloadTime = None
             else:
                 return
     
         ### Shoot
         for bullet in self.waitingBullets:
-            self.bulletsShot += 1
-            bullet.add(self.bullets)
+            bullet.setClick("l")
             self.waitingBullets.remove(bullet)
-            break
+            self.leftBulletsShot += 1
+            self.bullets.add(bullet)
+            return
+        
+            
+    def createRightClickBullet(self, capacity) -> p.sprite.Sprite:
+        if self.rightBulletsShot >= capacity:
+            return
+        ### Shoot
+        for bullet in self.waitingBullets:
+            ### Right click -> Better bullet
+            bullet.width = 1
+            bullet.setClick("r")
+            bullet.setDamage(bullet.damage * 5)
+            bullet.setRadius(bullet.radius * 5)
+            self.waitingBullets.remove(bullet)
+            self.rightBulletsShot += 1
+            self.bullets.add(bullet)
+            return
         
         
     def updateEnemies(self) -> None:
@@ -263,6 +298,16 @@ class Main:
         
         
     def updateBullets(self) -> None:
+        ### Give stronger bullet every X seconds
+        if self.rightBulletsShot > 0:
+            if not self.lastGivenBullet:
+                self.lastGivenBullet = p.time.get_ticks()
+            if self.lastGivenBullet + self.settings.rightBulletCooldown <= p.time.get_ticks():
+                if self.rightBulletsShot <= self.settings.playerRightShootingCapacity:
+                    self.rightBulletsShot -= 1
+                self.lastGivenBullet = None
+            
+        
         if self.bullets:
             for bullet in self.bullets:
                 collision = bullet.checkCollision(self.enemies)
@@ -271,12 +316,24 @@ class Main:
                     bullet.draw()
                 else:
                     self.bullets.remove(bullet)
-                    bullet.color = self.randomRGB
-                    self.setRandomRGB()
                     self.waitingBullets.add(bullet)
                     if type(collision) != str:
-                        self.hanldeShootingEnemies(collision, bullet.damage)
+                        self.hanldeShootingEnemies(collision, bullet.damage, bullet)
+                    bullet.reset()
 
+
+    def renderFonts(self) -> p.font:
+        ### Player Ammo
+        ### LeftClickAmmo
+        ammoL = str(self.settings.playerLeftShootingCapacity - self.leftBulletsShot)
+        offsetL = len(ammoL) * 15
+        ### RightClickAmmo
+        ammoR = str(self.settings.playerRightShootingCapacity - self.rightBulletsShot)
+        offsetR = len(ammoR) * 5
+        self.screen.blit(self.settings.playerFont.render(ammoL, True, self.settings.playerLeftClickAmmoFontColor),
+                                                        (self.healthBarStartPos[0] - offsetL, self.healthBarStartPos[1] - 30))
+        self.screen.blit(self.settings.playerFont.render(ammoR, True, self.settings.playerRightClickAmmoFontColor),
+                                                        (self.healthBarEndPos[0] + offsetR, self.healthBarStartPos[1] - 30))
             
             
     def events(self) -> None:
@@ -307,7 +364,15 @@ class Main:
             
             elif event.type == p.MOUSEBUTTONDOWN:
                 self.shotX, self.shotY = event.pos
-                self.createBullet(self.settings.playerShootingCapacity)
+                button = event.button
+                if button == 1:
+                    self.createLeftClickBullet(self.settings.playerLeftShootingCapacity)
+                elif button == 3:
+                    self.createRightClickBullet(self.settings.playerRightShootingCapacity)
+                else:
+                    return
+                
+                
         
         
     def run(self) -> None:
@@ -319,6 +384,9 @@ class Main:
         
         ### Blit the player
         self.blitPlayer()
+        
+        ### Fonts
+        self.renderFonts()
         
         ### Blit the health bars
         self.blitPlayerHealthBar()

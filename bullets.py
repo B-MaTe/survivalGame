@@ -9,13 +9,19 @@ class Bullet(Sprite):
         self.pos = pos
         self.screen = screen
         self.radius = radius
+        self.startingRadius = radius
         self.damage = damage
+        self.width = 0
+        self.leftClick = None
+        self.startingDamage = damage
         self.middleCoo = (self.settings.W // 2, self.settings.H // 2)
         self.color = self.settings.bulletColor
-        self.rect = p.Rect(self.middleCoo[0], self.middleCoo[1], radius * 5, radius * 5)
+        self.rect = p.Rect(self.middleCoo[0], self.middleCoo[1], radius, radius)
         self.speed = 5
         self.rect.x, self.rect.y = self.middleCoo[0], self.middleCoo[1]
         self.shotX, self.shotY = None, None
+        
+        self.currentTick = None
         
         
     
@@ -44,29 +50,43 @@ class Bullet(Sprite):
     def checkCollision(self, enemies) -> bool or p.sprite.Sprite:
         for enemy in enemies:
             if self.rect.colliderect(enemy.rect):
-                ### Reset the pos
-                self.resetBullet()
                 return enemy
         if 0 >= self.rect.x or self.rect.x >= self.settings.W or 0 >= self.rect.y or self.rect.y >= self.settings.H:
-            ### Reset the pos
-            self.resetBullet()
             return "Out"
         return False
     
     
     def draw(self) -> p.Rect:
-        p.draw.rect(self.screen, self.color, self.rect)
+        if self.leftClick:
+            p.draw.circle(self.screen, self.color, (self.rect.x, self.rect.y), self.radius, self.width)
+        else:
+            if not self.currentTick:
+                self.currentTick = p.time.get_ticks()
+            if self.currentTick + 30 <= p.time.get_ticks():
+                p.draw.circle(self.screen, self.color, (self.rect.x, self.rect.y), self.radius, self.width)
+                self.currentTick = p.time.get_ticks()
+                self.radius += 1
+        #p.draw.rect(self.screen, self.color, self.rect)
     
     
-    def resetBullet(self) -> None:
+    def reset(self) -> None:
         self.shotX, self.shotY = None, None
         self.rect.x, self.rect.y = self.middleCoo
+        self.damage = self.startingDamage
+        self.radius = self.startingRadius
+        self.width = 0
+        self.leftClick = None
         
         
+    def updateRect(self):
+        self.rect = p.draw.circle(self.screen, self.color, self.middleCoo, self.radius, self.width)
+        #self.rect = p.Rect(self.middleCoo[0], self.middleCoo[1], self.radius, self.radius)
+    
     ### SETTERS
     
     def setRadius(self, radius):
         self.radius = radius
+        self.updateRect()
         
     
     def setDamage(self, damage):
@@ -79,6 +99,22 @@ class Bullet(Sprite):
         
     def setSpeed(self, speed):
         self.speed = speed
+        
+        
+    def setWidth(self, width):
+        self.width = width
+        
+        
+    def setClick(self, click):
+        if click == "l":
+            self.leftClick = True
+        elif click == "r":
+            self.leftClick = False
+        
+    ### GETTERS
+    
+    def getClick(self) -> bool:
+        return self.leftClick
     
     
     

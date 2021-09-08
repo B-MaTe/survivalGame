@@ -1,5 +1,7 @@
 import pygame as p
 #import ctypes
+from random import choice
+import os
 
 
 class Settings:
@@ -21,31 +23,38 @@ class Settings:
         self.circleSize = 15
         self.noise = 125
         
+        ### Fonts
+        self.playerFont = p.font.SysFont(choice(p.font.get_fonts()), self.H // 35, True)
+        self.playerLeftClickAmmoFontColor = (255, 255, 255)
+        self.playerRightClickAmmoFontColor = (255, 255, 255)
+        
+        
         ### Rate of enemy spawning
         ### 10: 1 in every run of program main loop(REAAAALLLYYY FAST)
         self.spawnRate = 600
         
-        ### Number of enemies / level (Loading time is heavily impacted)
-        self.waitingEnemyNumber = {
-            "beginner": 50,
-            "easy" : 100,
-            "normal" : 150, 
-            "hard" : 200,
-            "veryHard" : 300,
-            "hardcore" : 500
-        }
+        ### Max number of enemies to be drawn on screen at once (Loading time is heavily impacted)
+        self.waitingEnemyNumber = 100
+            
         
+        
+        ### Music
+        ###self.backgroundMusic = p.mixer.Sound(os.path.join(os.path.dirname(__file__), "music", "themesong.wav"))
+        
+        ### Framerate
         self.FPS = 60
         
         ### Difficulty
-        self.difficulty = "normal"
+        self.difficulty = "hard"
         
         ### PLAYER SETTINGS ###
         self.playerSize = (self.H // 25 , self.H // 25)
         self.playerSpeed = 2
-        self.playerShootingCapacity = 25
-        self.numberOfBullets = 60 ### Has to be bigger than the capacity of magazine
-        self.bulletColor = (0,0,0)
+        self.playerLeftShootingCapacity = 25
+        self.playerRightShootingCapacity = 5
+        self.rightBulletCooldown = 7000 # Milliseconds
+        self.numberOfBullets = 60 ### Has to be bigger than the capacity of the two magazines
+        self.bulletColor = (255,255,255)
         self.reloadTime = 5000 ### Milliseconds
         
         self.playerHealth = {

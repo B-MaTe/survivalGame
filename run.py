@@ -2,7 +2,8 @@ from main import Main
 from settings import Settings
 import pygame as p
 p.init()
-
+p.mixer.init()
+p.font.init()
 class Run:
     def __init__(self) -> None:
         self.main = Main()

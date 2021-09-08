@@ -25,6 +25,13 @@ class Player:
         return os.path.join(filepath, "img", f"{skin}.png")
     
     
+    def getHealth(self) -> int:
+        return self.health
+    
+    
+    def reduceHealth(self, damage) -> None:
+        self.health -= damage
+    
     
     def createPlayer(self, path) -> p.Surface:
         ### Get the image

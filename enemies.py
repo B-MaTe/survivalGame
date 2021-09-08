@@ -15,9 +15,13 @@ class Enemy(Sprite):
         self.x, self.y = self.rect.x, self.rect.y
         self.startingHealth = self.image.get_width() // 5
         self.health = self.startingHealth
-        
-        
-        
+        self.damage = 1 + randint(0, self.image.get_width()) * 0.01### 1 is the original damage, but I randomize it according to the difficulty to make it a bit unpredictable
+    
+    
+    def reset(self):
+        ### Resets the enemy
+        self.health = self.startingHealth
+    
         
     def getImagePath(self) -> str:
         ### CWD
@@ -42,11 +46,9 @@ class Enemy(Sprite):
         
     ### SETTERS
     
-    def setHealth(self, health, damage=True):
-        if damage:
-            self.health -= health
-        else:
-            self.health += health
+    def reduceHealth(self, damage):
+        self.health -= damage
+        
             
             
     ### GETTERS
